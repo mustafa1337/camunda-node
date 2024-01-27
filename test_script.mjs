@@ -54,6 +54,6 @@ client.subscribe("email_versenden", async function({ task, taskService }) {
         }
       });
     
-    await taskService.complete(task, processVariables);
+    await taskService.complete(task);
     console.log("Task completed");
 });
