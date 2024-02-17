@@ -117,16 +117,52 @@ client.subscribe("calculate_postpone_duedate", async function({ task, taskServic
     
     // Das Abgabedatum in den Prozessvariablen aktualisieren
     processVariables.set("due_date", dueDate);
-    processVariables.set("max_postponing_crossed", false);
     console.log("Neues Abgabedatum: " + dueDate);
   } else {
-    processVariables.set("max_postponing_crossed", true);
+
     console.log("Maximales Abgabedatum/Verlängerung überschritten!")
-    return false;
+
+    processVariables.set("due_date", latestDueDatePossible);
+    console.log("Späteste Abgabedatum zugewiesen: " + latestDueDatePossible);
+
   }
 
   // Task abschließen und Ergebnis zurückgeben
   await taskService.complete(task, processVariables);
-  console.log("Task completed: Neues Abgabedatum berechnen" + dueDate);
+  console.log("Task completed: Neues Abgabedatum berechnen " + dueDate);
 
 });
+
+
+client.subscribe("student_verlaengerung_informieren", async function({ task, taskService }) {
+
+  const namen = task.variables.get("student_name")
+  let endDate = task.variables.get("due_date")
+
+    var transporter = nodemailer.createTransport({
+        service: 'ethereal',
+        auth: {
+          user: 'jamel.oreilly@ethereal.email',
+          pass: 'uMWRV5EQWNp6yDg34N'
+        }
+      });
+      
+      var mailOptions = {
+        from: 'jamel.oreilly@ethereal.email',
+        to: 'jamel.oreilly@ethereal.email',
+        subject: 'Information zur Abschlussarbeit',
+        text: 'Hallo Herr/Frau ' + namen + '. Das neue Abgabedatum ist: ' + endDate
+      };
+      
+      transporter.sendMail(mailOptions, function(error, info){
+        if (error) {
+          console.log(error);
+        } else {
+          console.log('Email sent: ' + info.response);
+        }
+      });
+    
+    await taskService.complete(task);
+    console.log("Task completed: Student über Verlängerung informieren");
+});
+
